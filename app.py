@@ -74,9 +74,11 @@ if uploaded_file:
             forecast_df['Upper'] = forecast_df['Demand ($M)'] * 1.05
             
             fig_bar = go.Figure()
-            fig_bar.add_trace(go.Bar(x=forecast_df['Month'], y=forecast_df['Demand ($M)'], name='Predicted', marker_color='#2E86AB'))
-            fig_bar.add_trace(go.Scatter(x=forecast_df['Month'], y=forecast_df['Upper'], name='Confidence Interval', line=dict(color='gray', dash='dot')))
-            st.plotly_chart(fig_bar, use_container_width=True)
+fig_bar.add_trace(go.Bar(x=forecast_df['Month'], y=forecast_df['Demand ($M)'], name='Predicted Demand', marker_color='#2E86AB'))
+fig_bar.add_trace(go.Scatter(x=forecast_df['Month'], y=forecast_df['Upper'], name='Confidence Upper Bound', line=dict(color='gray', dash='dot')))
+# --- ADD THIS LINE ---
+fig_bar.update_layout(xaxis_title="2026 Timeline (Months)", yaxis_title="Projected Demand (USD Millions)")
+st.plotly_chart(fig_bar, use_container_width=True)
             
 
         with col_f2:
@@ -95,7 +97,9 @@ if uploaded_file:
             # Inventory vs Sales Trendline (From Ratios Sheet)
             years = ["2022", "2023", "2024", "2025"]
             ratio_vals = [1.0, 0.89, 0.74, 0.68]
-            fig_eff = px.line(x=years, y=ratio_vals, title="Inventory / Sales Efficiency Trend", markers=True)
+            # ADD labels={'x': 'Fiscal Year', 'y': 'Ratio (%)'} inside the function:
+fig_eff = px.line(x=years, y=ratio_vals, title="Inventory / Sales Efficiency Trend", markers=True, 
+                  labels={'x': 'Fiscal Reporting Year', 'y': 'Inventory-to-Sales Ratio (%)'})
             fig_eff.add_hline(y=0.70, line_dash="dash", line_color="green", annotation_text="Efficiency Target")
             st.plotly_chart(fig_eff, use_container_width=True)
             
@@ -104,7 +108,9 @@ if uploaded_file:
             # Historical Revenue + Linear Regression
             h_years = [2019, 2020, 2021, 2022, 2023, 2024, 2025]
             h_rev = [5495, 3906, 4273, 4386, 5267, 6063, 6230]
-            fig_reg = px.scatter(x=h_years, y=h_rev, trendline="ols", title="Revenue Growth & Trendline Analysis")
+            # ADD labels={'x': 'Year', 'y': 'Revenue ($M)'} inside the function:
+fig_reg = px.scatter(x=h_years, y=h_rev, trendline="ols", title="Revenue Growth & Trendline Analysis",
+                     labels={'x': 'Historical Year', 'y': 'Total Revenue (USD Millions)'})
             st.plotly_chart(fig_reg, use_container_width=True)
 
         # --- SECTION 3: EOQ & COST CURVES ---
