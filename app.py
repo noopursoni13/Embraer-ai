@@ -141,7 +141,7 @@ if uploaded_file:
             st.metric("Optimal Order Size (EOQ)", f"{round(eoq_val, 2)} Units")
             st.metric("Reorder Point (ROP)", f"{round(rop_val, 2)} Units")
             st.warning(f"Lead time of {l_time} months requires ordering at {round(rop_val)} units to prevent stock-outs.")
-st.markdown("---")
+        st.markdown("---")
         st.subheader("🧪 Unique Agent Feature: Scenario Sensitivity Analysis")
         scenario = st.radio("Select Market Scenario:", ["Standard Growth", "Supply Chain Disruption (+20% Cost)", "Aggressive Demand (+15%)"])
 
