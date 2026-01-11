@@ -141,7 +141,18 @@ if uploaded_file:
             st.metric("Optimal Order Size (EOQ)", f"{round(eoq_val, 2)} Units")
             st.metric("Reorder Point (ROP)", f"{round(rop_val, 2)} Units")
             st.warning(f"Lead time of {l_time} months requires ordering at {round(rop_val)} units to prevent stock-outs.")
+st.markdown("---")
+        st.subheader("🧪 Unique Agent Feature: Scenario Sensitivity Analysis")
+        scenario = st.radio("Select Market Scenario:", ["Standard Growth", "Supply Chain Disruption (+20% Cost)", "Aggressive Demand (+15%)"])
 
+        if scenario == "Supply Chain Disruption (+20% Cost)":
+            adj_eoq = eoq_val * 1.1 # 10% increase in order size to buffer
+            st.error(f"⚠️ Risk Detected: Under this scenario, the AI recommends increasing Order Quantity to {round(adj_eoq, 2)} units to hedge against lead time volatility.")
+        elif scenario == "Aggressive Demand (+15%)":
+            adj_rop = rop_val * 1.15
+            st.warning(f"📈 Growth Alert: AI suggests raising Reorder Point to {round(adj_rop, 2)} units to support higher fulfillment rates.")
+        else:
+            st.success("✅ Stable Environment: Current parameters are optimized for structural inventory efficiency.")
         # Export Button
         st.download_button("📥 Download Executive AI Report", forecast_df.to_csv(index=False), "Embraer_AgenticAI_Report.csv")
 
