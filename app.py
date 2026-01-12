@@ -36,14 +36,20 @@ st.sidebar.markdown("---")
 st.sidebar.write("**AI Model Confidence:** 94.2%")
 st.sidebar.write("**Strategy:** Deterministic Planning")
 
-# --- TOP LEVEL METRICS ---
-st.subheader("🏥 Inventory Health Signals (Current)")
+# --- TOP LEVEL METRICS (DYNAMIC - will update after calculation) ---
+st.subheader("🏥 Inventory Health Signals")
 m1, m2, m3, m4, m5 = st.columns(5)
 m1.metric("Inventory Turnover", "2.46x", "Healthy")
 m2.metric("DIO (Days)", "148.3", "-2 Days")
 m3.metric("Inv / Sales Ratio", "0.68%", "Improving")
-m4.metric("Market Demand 2026", "$6,358M", "+2.05%")
-m5.metric("Safety Stock", "45 Units", "+5% Buffer")
+
+# Dynamic metrics - show placeholders until calculated
+if 'safety_stock_units' in st.session_state:
+    m4.metric("Market Demand 2026", f"${st.session_state.annual_forecast:.0f}M", "+2.05%")
+    m5.metric("Safety Stock", f"{st.session_state.safety_stock_units:.0f} Units", "+5% Buffer")
+else:
+    m4.metric("Market Demand 2026", "$6,358M", "+2.05%")
+    m5.metric("Safety Stock", "45 Units", "+5% Buffer")
 
 # --- DATA UPLOAD & AGENT TRIGGER ---
 uploaded_file = st.file_uploader("Upload 'historical_data.csv' to activate Agents", type="csv")
@@ -165,6 +171,7 @@ if uploaded_file:
         st.session_state.X = X
         st.session_state.mae_rf = mae_rf
         st.session_state.annual_units = annual_demand_units
+        st.rerun()  # Refresh to update top metrics
 
     # --- DISPLAY RESULTS ---
     if 'annual_forecast' in st.session_state:
@@ -187,8 +194,9 @@ if uploaded_file:
             
             fig_bar = go.Figure()
             fig_bar.add_trace(go.Bar(x=forecast_df['Month'], y=forecast_df['Demand ($M)'], name='Predicted Demand', marker_color='#2E86AB'))
-            fig_bar.add_trace(go.Scatter(x=forecast_df['Month'], y=forecast_df['Upper'], name='Upper Bound', line=dict(color='gray', dash='dot')))
-            fig_bar.add_trace(go.Scatter(x=forecast_df['Month'], y=forecast_df['Lower'], name='Lower Bound', line=dict(color='gray', dash='dot')))
+            # FIXED: Different colors for upper/lower bounds
+            fig_bar.add_trace(go.Scatter(x=forecast_df['Month'], y=forecast_df['Upper'], name='Upper Bound (105%)', line=dict(color='#FF6B6B', dash='dot', width=2)))
+            fig_bar.add_trace(go.Scatter(x=forecast_df['Month'], y=forecast_df['Lower'], name='Lower Bound (95%)', line=dict(color='#4ECDC4', dash='dot', width=2)))
             fig_bar.update_layout(xaxis_title="2026 Timeline (Months)", yaxis_title="Projected Demand (USD Millions)", showlegend=True)
             st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -276,21 +284,23 @@ if uploaded_file:
             else:
                 st.success("✅ Base case optimized.")
 
-        # FIXED ABC Analysis - CORRECT IMPLEMENTATION
+        # FIXED ABC Analysis with proper definitions
         with col2:
             st.subheader("📊 ABC Inventory Classification")
-            # Proper ABC Analysis: Sort by demand value, calculate cumulative percentages
             abc_data = forecast_df.sort_values('Demand ($M)', ascending=False).copy()
             abc_data['Demand_Value'] = abc_data['Demand ($M)']
             abc_data['CumPct'] = abc_data['Demand_Value'].cumsum() / abc_data['Demand_Value'].sum()
             
-            # Standard ABC thresholds: A=80% value (top 20% items), B=next 15%, C=rest
+            # Standard ABC thresholds
             abc_data['Class'] = np.where(abc_data['CumPct'] <= 0.80, 'A',
                                np.where(abc_data['CumPct'] <= 0.95, 'B', 'C'))
             
             abc_summary = abc_data.groupby('Class')['Demand_Value'].agg(['sum', 'count']).reset_index()
             abc_summary.columns = ['Class', 'Total_Value', 'Item_Count']
             abc_summary['Total_Value'] = abc_summary['Total_Value'].round(1)
+            
+            # ABC Legend Definitions
+            st.info("**ABC Classification:**\n• **A**: Top 20% months = 80% value (Critical)\n• **B**: Next 15% months = 15% value (Important)\n• **C**: Remaining 65% months = 5% value (Monitor)")
             
             fig_abc = px.pie(abc_summary, values='Total_Value', names='Class', 
                            title="ABC Analysis: Value Distribution",
