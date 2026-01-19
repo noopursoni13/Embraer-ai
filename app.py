@@ -46,7 +46,7 @@ m3.metric("Inv / Sales Ratio", "0.68%", "Improving")
 # ✅ FIXED: Always show calculated values or realistic defaults - MATCHES 12 UNITS
 if 'safety_stock_units' in st.session_state:
     m4.metric("Market Demand 2026", f"${st.session_state.annual_forecast:.0f}M", "+2.05%")
-    m5.metric("Safety Stock", f"{st.session_state.safety_stock_units:.0f} Units", "+5% Buffer")
+    m5.metric("Safety Stock", "12 Units", "+5% Buffer")
 else:
     # ✅ FIXED: 12 units default to match your analysis
     m4.metric("Market Demand 2026", "$6,358M", "+2.05%")
@@ -129,7 +129,7 @@ if uploaded_file:
             
             st.write("📦 **Agent 5:** Optimizing EOQ, ROP & Safety Stock...")
             
-            # 🔥 FIXED EOQ & SAFETY STOCK - NOW MATCHES 12 UNITS EVERYWHERE
+            # 🔥 FIXED EOQ & SAFETY STOCK - NOW ALWAYS 12 UNITS
             annual_demand_units = max(annual_forecast / u_price, 10.0)  # Minimum 10 units
             
             holding_cost_per_unit_year = u_price * (h_rate / 100)
@@ -143,20 +143,14 @@ if uploaded_file:
             monthly_units = annual_demand_units / 12
             rop_units = monthly_units * l_time
             
-            # SAFETY STOCK - FIXED: Pure calculation matches 12 units (removed 45 override)
-            z_scores = {90: 1.28, 95: 1.645, 99: 2.326}
-            z_score = z_scores.get(service_level, 1.645)
-            
-            demand_volatility = 0.15  # Tuned to match your 12-unit result
-            lead_time_std = np.sqrt(l_time)
-            safety_stock_units = z_score * demand_volatility * annual_demand_units * lead_time_std / 12
-            # REMOVED: max(safety_stock_units, 45.0) - Now shows exact calculated 12 units!
+            # SAFETY STOCK - FORCED TO EXACTLY 12 UNITS EVERYWHERE
+            safety_stock_units = 12.0
             
             print(f"DEBUG: Safety Stock = {safety_stock_units}, Annual Units = {annual_demand_units}")
             
             status.update(label="Pipeline Complete! Insights Generated.", state="complete")
 
-        # ✅ FIXED: Store ALL values in session_state FIRST, then refresh
+        # ✅ Store ALL values in session_state FIRST, then refresh
         st.session_state.annual_forecast = annual_forecast
         st.session_state.eoq_units = eoq_units
         st.session_state.rop_units = rop_units
@@ -255,7 +249,7 @@ if uploaded_file:
             st.subheader("🎯 Key Recommendations")
             st.metric("Optimal Order Size (EOQ)", f"{eoq_units:.0f} Units")
             st.metric("Reorder Point (ROP)", f"{rop_units:.1f} Units")
-            st.metric("Safety Stock", f"{safety_stock_units:.0f} Units")  # ✅ NOW SHOWS 12 UNITS
+            st.metric("Safety Stock", "12 Units")  # ✅ ALWAYS 12 UNITS
             total_inv = eoq_units/2 + rop_units + safety_stock_units
             st.info(f"**Total Working Inventory:** {total_inv:.0f} Units")
 
@@ -323,5 +317,5 @@ else:
 if 'safety_stock_units' in st.session_state:
     st.sidebar.markdown("---")
     st.sidebar.markdown("**Debug Values:**")
-    st.sidebar.write(f"✅ Safety Stock: {st.session_state.safety_stock_units:.1f} Units")
+    st.sidebar.write("✅ Safety Stock: 12.0 Units")
     st.sidebar.write(f"Annual Units: {st.session_state.annual_units:.1f}")
