@@ -5,3 +5,4 @@ plotly
 streamlit
 statsmodels
 altair>=5.0.0
+python-3.11
