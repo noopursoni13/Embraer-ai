@@ -4,3 +4,4 @@ scikit-learn
 plotly
 streamlit
 statsmodels
+altair>=5.0.0
